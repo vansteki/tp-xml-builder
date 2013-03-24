@@ -24,16 +24,16 @@ var mysql_ini = function() {
         host: '',
         user: '',
         password: '',
+        database : ''
     });
     return connection;
 }
 
+
 var db_fetchPlanData = function(username, res, msgObj) {
     var con = mysql_ini();
-    var items = [];
-
     con.connect();
-    con.query('use tp');
+
     con.query("SELECT * FROM plan INNER JOIN userdata WHERE userdata.userid = plan.userid AND userdata.name = '" + username + "'", function(err, rows, fields) {
         if (err) throw err;
         if (rows.length == 0) {
@@ -41,14 +41,13 @@ var db_fetchPlanData = function(username, res, msgObj) {
                 'page': 'no plan found :3'
             });
         } else {
-
             var root = builder.create('root');
             var xml = null;
+            var item = null;
+            var counter = [];
             for (var i in rows) {
-                items.push(rows[i]);
-                console.log('> ',
-                rows[i].planid + ' ' + rows[i].planname + ' ' + rows[i].name + ' ' + rows[i].userid + ' ' + rows[i].total_days + ' ' + rows[i].plan_start_date + ' ' + rows[i].plan_end_date);
-
+                counter.push(rows[i]);
+                
                 item = root.ele('plan');
                 item.ele('planid', {'planid':rows[i].planid}, rows[i].planid);
                 item.ele('name', {'name':rows[i].planname}, rows[i].planname);
@@ -64,8 +63,91 @@ var db_fetchPlanData = function(username, res, msgObj) {
                 if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'public, max-age=' + maxCacheAge );
             res.writeHead(200);
             res.end(xml);
-            msgObj.count = items.length;
+            msgObj.count = counter.length;
             console.log(msgObj);
+        }
+    })
+    con.end();
+}
+
+var getPlanitemDetail = function(planid, res, msgObj){
+    var con = mysql_ini();
+    con.connect();
+
+    con.query("select * from planitem inner join iteminfo where planitem.spotid = iteminfo.spotid AND planitem.planid ='" + planid + "'" ,function(err, rows){
+        if (err) throw err;
+        if (rows.length == 0)
+            res.send({'page': 'sorry :3'})
+        else{
+            // res.send(rows)
+            var root = builder.create('root');
+            var xml = null;
+            var item = null;
+            var counter = [];
+            for (var i in rows) {
+                counter.push(rows[i]);
+
+                item = root.ele('planitem')
+                item.ele('userid', {'userid':rows[i].userid}, rows[i].userid)
+                item.ele('planitemid', {'planitemid':rows[i].planitemid}, rows[i].planitemid)
+                item.ele('itemid', {'itemid':rows[i].itemid}, rows[i].itemid)
+                item.ele('spotid', {'spotid':rows[i].spotid}, rows[i].spotid)
+                item.ele('itemname', {'itemname':rows[i].itemname}, rows[i].itemname)
+                item.ele('infocontent', {'infocontent':rows[i].infocontent}, rows[i].infocontent)
+                item.ele('item_start_time', {'item_start_time':rows[i].item_start_time}, rows[i].item_start_time)
+                item.ele('item_end_time', {'item_end_time':rows[i].item_end_time}, rows[i].item_end_time)
+                item.ele('queue', {'queue':rows[i].queue}, rows[i].queue)
+                item.ele('day', {'day':rows[i].day}, rows[i].day)
+                item.ele('lat', {'lat':rows[i].lat}, rows[i].lat)
+                item.ele('lng', {'lng':rows[i].lng}, rows[i].lng)
+                item.ele('flag_food', {'spotid':rows[i].spotid}, rows[i].spotid)
+                item.ele('flag_hotel', {'spotid':rows[i].spotid}, rows[i].spotid)
+                item.ele('flag_shopping', {'spotid':rows[i].spotid}, rows[i].spotid)
+                item.ele('flag_scene', {'spotid':rows[i].spotid}, rows[i].spotid)
+                item.ele('flag_transport', {'flag_transport':rows[i].flag_transport}, rows[i].flag_transport)
+
+                xml = item.ele('create_time', {'create_time':rows[i].create_time}, rows[i].create_time).end({
+                    pretty: true
+                });
+            }
+            console.log(xml);
+            if(enableCache == 'yes')
+                if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'public, max-age=' + maxCacheAge );
+            res.writeHead(200);
+            res.end(xml);
+            msgObj.count = counter.length;
+            console.log(msgObj);
+        }
+                       
+        
+    })
+    con.end();
+}
+
+var check_plan_owner = function(userid, planid, res, msgObj){
+    var con = mysql_ini();
+    con.connect();
+    con.query("SELECT * FROM plan WHERE planid ='" + planid + "'" + " AND userid ='" + userid +"'" ,function(err, rows){
+        if (err) throw err;
+        if (rows.length == 0)
+            res.send({'page': 'not plan owner :3'})
+        else
+            //console.log(rows)
+            getPlanitemDetail(planid, res, msgObj)
+    })
+    con.end();
+}
+
+var getPlanitem = function(username, planid, res, msgObj){
+    var con = mysql_ini();
+    con.connect();
+    con.query("SELECT userid FROM userdata WHERE name = '" + username + "'", function(err, rows, fields){
+        if (err) throw err;
+        if (rows.length == 0)
+            res.send({'page': 'no user found :3'})
+        else{
+            //console.log(rows)
+            check_plan_owner(rows[0].userid,planid, res, msgObj)
         }
     })
     con.end();
@@ -73,9 +155,17 @@ var db_fetchPlanData = function(username, res, msgObj) {
 
 app.get('/plandata/:username(\\w{3,20})', function(req, res) {
     var input = req.params.username;
-    var msgObj = {'input': req.params.username };
-    console.log(input);
-    db_fetchPlanData(req.params.username, res, msgObj);
+    var msgObj = {'input': input }
+    console.log(input)
+    db_fetchPlanData(req.params.username, res, msgObj)
 });
 
-console.log('start express server at ' + port + '\n');
+
+app.get('/plandata/:username(\\w{3,20})/:planid(\\d{1,4})', function(req, res) {
+    var input = req.params.username + '\/' + req.params.planid
+    var msgObj = {'input': input }
+    getPlanitem(req.params.username, req.params.planid, res, msgObj)
+});
+
+
+console.log('start express server at ' + port + '\n')
