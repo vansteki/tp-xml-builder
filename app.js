@@ -100,10 +100,10 @@ var getPlanitemDetail = function(planid, res, msgObj){
                 item.ele('day', {'day':rows[i].day}, rows[i].day)
                 item.ele('lat', {'lat':rows[i].lat}, rows[i].lat)
                 item.ele('lng', {'lng':rows[i].lng}, rows[i].lng)
-                item.ele('flag_food', {'spotid':rows[i].spotid}, rows[i].spotid)
-                item.ele('flag_hotel', {'spotid':rows[i].spotid}, rows[i].spotid)
-                item.ele('flag_shopping', {'spotid':rows[i].spotid}, rows[i].spotid)
-                item.ele('flag_scene', {'spotid':rows[i].spotid}, rows[i].spotid)
+                item.ele('flag_food', {'flag_food':rows[i].flag_food}, rows[i].flag_food)
+                item.ele('flag_hotel', {'flag_hotel':rows[i].flag_hotel}, rows[i].flag_hotel)
+                item.ele('flag_shopping', {'flag_shopping':rows[i].flag_shopping}, rows[i].flag_shopping)
+                item.ele('flag_scene', {'flag_scene':rows[i].flag_scene}, rows[i].flag_scene)
                 item.ele('flag_transport', {'flag_transport':rows[i].flag_transport}, rows[i].flag_transport)
 
                 xml = item.ele('create_time', {'create_time':rows[i].create_time}, rows[i].create_time).end({
