@@ -1,11 +1,11 @@
 // create server.
 var express = require('express'),
     app = express(),
-    port = 407;
+    port = 406;
 var mysql = require('mysql');
 var builder = require('xmlbuilder');
 var maxCacheAge = 86400/12;
-enableCache = 'yes'
+enableCache = 'no'
 app.listen(port);
 
 // var allowCrossDomain = function(req, res, next) {
@@ -41,7 +41,7 @@ var db_fetchPlanData = function(username, res, msgObj) {
                 'page': 'no plan found :3'
             });
         } else {
-            var root = builder.create('root');
+            var root = builder.create('root',{'version': '1.0', 'encoding': 'UTF-8'});
             var xml = null;
             var item = null;
             var counter = [];
@@ -61,7 +61,7 @@ var db_fetchPlanData = function(username, res, msgObj) {
             console.log(xml);
             if(enableCache == 'yes')
                 if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'public, max-age=' + maxCacheAge );
-            res.writeHead(200);
+            res.writeHead(200, {'Content-Type': 'text/xml; charset=UTF-8'});
             res.end(xml);
             msgObj.count = counter.length;
             console.log(msgObj);
@@ -80,7 +80,7 @@ var getPlanitemDetail = function(planid, res, msgObj){
             res.send({'page': 'sorry :3'})
         else{
             // res.send(rows)
-            var root = builder.create('root');
+            var root = builder.create('root',{'version': '1.0', 'encoding': 'UTF-8'});
             var xml = null;
             var item = null;
             var counter = [];
@@ -113,14 +113,12 @@ var getPlanitemDetail = function(planid, res, msgObj){
             console.log(xml);
             if(enableCache == 'yes')
                 if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'public, max-age=' + maxCacheAge );
-            res.writeHead(200);
+            res.writeHead(200, {'Content-Type': 'text/xml; charset=UTF-8'});
             res.end(xml);
             msgObj.count = counter.length;
             console.log(msgObj);
         }
-                       
-        
-    })
+ })
     con.end();
 }
 
