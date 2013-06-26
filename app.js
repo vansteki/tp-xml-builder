@@ -74,7 +74,7 @@ var getPlanitemDetail = function(planid, res, msgObj){
     var con = mysql_ini();
     con.connect();
 
-    con.query("select * from planitem inner join iteminfo where planitem.spotid = iteminfo.spotid AND planitem.planid ='" + planid + "'" ,function(err, rows){
+    con.query("select * from planitem inner join iteminfo where planitem.spotid = iteminfo.spotid AND planitem.planid ='" + planid + "' order by queue" ,function(err, rows){
         if (err) throw err;
         if (rows.length == 0)
             res.send({'page': 'sorry :3'})
